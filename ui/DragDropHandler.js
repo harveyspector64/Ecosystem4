@@ -1,14 +1,12 @@
-// src/ui/DragDropHandler.js
-
 export class DragDropHandler {
     constructor(uiManager) {
         this.uiManager = uiManager;
     }
 
-    setup() {
+    initialize() {
         this.uiManager.emojiPanel.addEventListener('dragstart', this.handleDragStart.bind(this));
-        this.uiManager.playArea.addEventListener('dragover', this.handleDragOver.bind(this));
-        this.uiManager.playArea.addEventListener('drop', this.handleDrop.bind(this));
+        this.uiManager.game.renderer.playArea.addEventListener('dragover', this.handleDragOver.bind(this));
+        this.uiManager.game.renderer.playArea.addEventListener('drop', this.handleDrop.bind(this));
     }
 
     handleDragStart(e) {
@@ -18,17 +16,15 @@ export class DragDropHandler {
     }
 
     handleDragOver(e) {
-        e.preventDefault(); // Necessary to allow dropping
+        e.preventDefault();
     }
 
     handleDrop(e) {
         e.preventDefault();
         const emoji = e.dataTransfer.getData('text/plain');
-        if (emoji) {
-            const rect = this.uiManager.playArea.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            this.uiManager.handleEmojiDrop(emoji, x, y);
-        }
+        const rect = e.target.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        this.uiManager.handleEmojiDrop(emoji, x, y);
     }
 }
