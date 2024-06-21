@@ -31,10 +31,11 @@ export class Game {
         this.eventSystem.subscribe('emojiAdded', this.handleEmojiAdded.bind(this));
         this.eventSystem.subscribe('butterflyDied', this.handleButterflyDied.bind(this));
         this.eventSystem.subscribe('birdDied', this.handleBirdDied.bind(this));
+        this.eventSystem.subscribe('createNewBush', this.handleCreateNewBush.bind(this));
         
         this.isRunning = true;
         this.lastUpdateTime = performance.now();
-        this.gameLoop();
+        this.gameLoop(this.lastUpdateTime);
     }
 
     gameLoop(currentTime) {
@@ -53,6 +54,7 @@ export class Game {
         this.updateDayNightCycle(deltaTime);
         this.entityManager.updateEntities(deltaTime);
         this.stateManager.update(deltaTime);
+        this.updateEntityCounts();
     }
 
     updateDayNightCycle(deltaTime) {
@@ -75,9 +77,11 @@ export class Game {
     handleDayNightChange() {
         if (this.dayNightCycle === 'night') {
             this.entityManager.hideAllButterflies();
+            this.renderer.applyDayNightEffect(true);
             // TODO: Spawn nocturnal animals
         } else {
             this.entityManager.showAllButterflies();
+            this.renderer.applyDayNightEffect(false);
             // TODO: Remove nocturnal animals
         }
         this.uiManager.updateDayNightCycle(this.dayNightCycle);
@@ -117,6 +121,20 @@ export class Game {
         this.eventSystem.gameEvent('logEvent', `A bird has died.`);
     }
 
+    handleCreateNewBush(data) {
+        const { nearBush } = data;
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.random() * 100 + 50; // 50-150px away
+        const newX = nearBush.x + distance * Math.cos(angle);
+        const newY = nearBush.y + distance * Math.sin(angle);
+        
+        if (this.stateManager.canPlantBush()) {
+            this.entityManager.addBush(newX, newY);
+            this.stateManager.incrementBushCount();
+            this.eventSystem.gameEvent('logEvent', `A new bush has grown from pollination!`);
+        }
+    }
+
     getEmojiName(emoji) {
         for (let key in GameConfig.EMOJIS) {
             if (GameConfig.EMOJIS[key] === emoji) return key.toLowerCase();
@@ -124,8 +142,18 @@ export class Game {
         return 'unknown';
     }
 
+    updateEntityCounts() {
+        const counts = {
+            butterflies: this.entityManager.entities.butterflies.length,
+            birds: this.entityManager.entities.birds.length,
+            worms: this.entityManager.entities.worms.length,
+            bushes: this.entityManager.entities.bushes.length,
+            trees: this.entityManager.entities.trees.length
+        };
+        this.uiManager.updateEntityCounts(counts);
+    }
+
     render() {
-        this.renderer.clear();
         this.entityManager.renderEntities(this.renderer);
     }
 }
