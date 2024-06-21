@@ -5,21 +5,20 @@ import { EventSystem } from './EventSystem.js';
 import { StateManager } from './StateManager.js';
 import { UIManager } from '../ui/UIManager.js';
 import { Renderer } from '../rendering/Renderer.js';
-import { PerformanceMonitor } from '../utils/PerformanceMonitor.js';
 import { GameConfig } from '../config/GameConfig.js';
 
 export class Game {
     constructor() {
-        this.entityManager = new EntityManager();
+        this.entityManager = new EntityManager(this);
         this.eventSystem = new EventSystem();
         this.stateManager = new StateManager();
         this.uiManager = new UIManager(this);
         this.renderer = new Renderer();
-        this.performanceMonitor = new PerformanceMonitor();
 
         this.isRunning = false;
         this.lastUpdateTime = 0;
-        this.lastCycle = 'day';
+        this.dayNightCycle = 'day';
+        this.cycleTimer = 0;
     }
 
     initialize() {
@@ -30,12 +29,58 @@ export class Game {
 
         // Set up event listeners
         this.eventSystem.subscribe('emojiAdded', this.handleEmojiAdded.bind(this));
-        this.eventSystem.subscribe('birdLanded', this.handleBirdLanded.bind(this));
-        this.eventSystem.subscribe('butterflyPollinated', this.handleButterflyPollinated.bind(this));
+        this.eventSystem.subscribe('butterflyDied', this.handleButterflyDied.bind(this));
+        this.eventSystem.subscribe('birdDied', this.handleBirdDied.bind(this));
         
         this.isRunning = true;
         this.lastUpdateTime = performance.now();
         this.gameLoop();
+    }
+
+    gameLoop(currentTime) {
+        if (!this.isRunning) return;
+
+        const deltaTime = (currentTime - this.lastUpdateTime) / 1000; // Convert to seconds
+        this.lastUpdateTime = currentTime;
+
+        this.update(deltaTime);
+        this.render();
+
+        requestAnimationFrame(this.gameLoop.bind(this));
+    }
+
+    update(deltaTime) {
+        this.updateDayNightCycle(deltaTime);
+        this.entityManager.updateEntities(deltaTime);
+        this.stateManager.update(deltaTime);
+    }
+
+    updateDayNightCycle(deltaTime) {
+        this.cycleTimer += deltaTime * 1000; // Convert back to milliseconds
+
+        const totalCycleTime = GameConfig.DAY_DURATION + GameConfig.NIGHT_DURATION;
+        if (this.cycleTimer >= totalCycleTime) {
+            this.cycleTimer -= totalCycleTime;
+        }
+
+        const newCycle = this.cycleTimer < GameConfig.DAY_DURATION ? 'day' : 'night';
+        
+        if (newCycle !== this.dayNightCycle) {
+            this.dayNightCycle = newCycle;
+            this.eventSystem.publish('dayNightChange', this.dayNightCycle);
+            this.handleDayNightChange();
+        }
+    }
+
+    handleDayNightChange() {
+        if (this.dayNightCycle === 'night') {
+            this.entityManager.hideAllButterflies();
+            // TODO: Spawn nocturnal animals
+        } else {
+            this.entityManager.showAllButterflies();
+            // TODO: Remove nocturnal animals
+        }
+        this.uiManager.updateDayNightCycle(this.dayNightCycle);
     }
 
     handleEmojiAdded(data) {
@@ -53,66 +98,30 @@ export class Game {
                     this.entityManager.addTree(x, y);
                     this.stateManager.incrementTreeCount();
                     this.entityManager.addBird(x, y);
-                    this.stateManager.incrementBirdCount();
                 }
                 break;
             case GameConfig.EMOJIS.WORM:
-                this.entityManager.addWorm(x, y);
-                this.stateManager.incrementWormCount();
+                if (this.entityManager.getWormCount() < GameConfig.MAX_WORMS) {
+                    this.entityManager.addWorm(x, y);
+                }
                 break;
         }
         this.eventSystem.gameEvent('logEvent', `A ${this.getEmojiName(emoji)} has been added to the ecosystem!`);
     }
 
-    handleBirdLanded(data) {
-        const { birdId } = data;
-        this.eventSystem.gameEvent('logEvent', `Bird ${birdId} has landed!`);
-        if (!this.stateManager.getState().firstBirdLanded) {
-            this.stateManager.setFirstBirdLanded();
-            this.uiManager.addWormToPanel();
-        }
+    handleButterflyDied(data) {
+        this.eventSystem.gameEvent('logEvent', `A butterfly has died.`);
     }
 
-    handleButterflyPollinated(data) {
-        const { bushId } = data;
-        this.eventSystem.gameEvent('logEvent', `A butterfly has pollinated bush ${bushId}!`);
+    handleBirdDied(data) {
+        this.eventSystem.gameEvent('logEvent', `A bird has died.`);
     }
 
     getEmojiName(emoji) {
-        switch(emoji) {
-            case GameConfig.EMOJIS.BUSH: return 'bush';
-            case GameConfig.EMOJIS.TREE: return 'tree';
-            case GameConfig.EMOJIS.BUTTERFLY: return 'butterfly';
-            case GameConfig.EMOJIS.BIRD: return 'bird';
-            case GameConfig.EMOJIS.WORM: return 'worm';
-            default: return 'creature';
+        for (let key in GameConfig.EMOJIS) {
+            if (GameConfig.EMOJIS[key] === emoji) return key.toLowerCase();
         }
-    }
-
-    gameLoop(currentTime) {
-        if (!this.isRunning) return;
-
-        this.update(currentTime);
-        this.render();
-
-        this.performanceMonitor.update(currentTime);
-
-        requestAnimationFrame(this.gameLoop.bind(this));
-    }
-
-    update(currentTime) {
-        const deltaTime = currentTime - this.lastUpdateTime;
-        this.lastUpdateTime = currentTime;
-
-        this.stateManager.update(deltaTime);
-        this.entityManager.updateEntities(deltaTime);
-        
-        // Check day/night cycle and update accordingly
-        const currentCycle = this.stateManager.getState().dayNightCycle;
-        if (currentCycle !== this.lastCycle) {
-            this.lastCycle = currentCycle;
-            this.eventSystem.gameEvent('dayNightChange', currentCycle);
-        }
+        return 'unknown';
     }
 
     render() {
