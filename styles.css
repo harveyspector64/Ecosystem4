@@ -1,20 +1,8 @@
-/* styles.css */
-
-:root {
-    --sidebar-bg: #f0f0f0;
-    --play-area-bg: #e6f7ff;
-    --night-bg: #001f3f;
-    --text-color: #333;
-    --border-color: #ccc;
-    --hover-color: #4CAF50;
-}
-
 body {
     margin: 0;
     padding: 0;
-    font-family: 'Arial', sans-serif;
+    font-family: Arial, sans-serif;
     overflow: hidden;
-    color: var(--text-color);
 }
 
 #game-container {
@@ -23,31 +11,24 @@ body {
 }
 
 #sidebar {
-    width: 250px;
-    background-color: var(--sidebar-bg);
-    padding: 20px;
+    width: 150px;
+    background-color: #f0f0f0;
     display: flex;
     flex-direction: column;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    padding: 10px;
 }
 
 #emoji-panel {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
 }
 
 .emoji {
-    font-size: 32px;
+    font-size: 40px;
     cursor: pointer;
     user-select: none;
-    text-align: center;
-    transition: transform 0.2s ease;
-}
-
-.emoji:hover {
-    transform: scale(1.1);
 }
 
 .emoji.disabled {
@@ -55,110 +36,35 @@ body {
     cursor: not-allowed;
 }
 
-#entity-counts {
-    margin-bottom: 30px;
-    background-color: white;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-#event-menu {
+#event-log {
     flex-grow: 1;
     overflow-y: auto;
-    background-color: white;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-#event-menu h3 {
+#event-log h3 {
     margin-top: 0;
-    border-bottom: 2px solid var(--border-color);
-    padding-bottom: 10px;
-}
-
-#event-log {
-    font-size: 14px;
-}
-
-.event-message {
     margin-bottom: 10px;
-    padding: 8px;
-    background-color: #f9f9f9;
-    border-radius: 4px;
+}
+
+#event-messages {
+    font-size: 14px;
 }
 
 #play-area {
     flex-grow: 1;
-    background-color: var(--play-area-bg);
+    background-color: #e6f7ff;
     position: relative;
     overflow: hidden;
-    transition: background-color 0.5s ease;
 }
 
 .entity {
     position: absolute;
-    transition: all 0.3s ease;
+    font-size: 30px;
 }
 
-/* Day/Night cycle */
-#play-area.night-mode {
-    background-color: var(--night-bg);
-}
-
-/* Entity-specific styles */
+/* Specific entity sizes */
 .bush { font-size: 40px; }
 .tree { font-size: 50px; }
-.butterfly { font-size: 24px; }
-.bird { font-size: 28px; }
+.butterfly { font-size: 20px; }
+.bird { font-size: 30px; }
 .worm { font-size: 20px; }
-
-/* Animations */
-@keyframes flutter {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
-}
-
-.butterfly {
-    animation: flutter 2s ease-in-out infinite;
-}
-
-@keyframes wiggle {
-    0%, 100% { transform: rotate(0deg); }
-    25% { transform: rotate(5deg); }
-    75% { transform: rotate(-5deg); }
-}
-
-.worm {
-    animation: wiggle 1s ease-in-out infinite;
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-    #game-container {
-        flex-direction: column;
-    }
-
-    #sidebar {
-        width: 100%;
-        height: auto;
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: space-between;
-    }
-
-    #emoji-panel {
-        width: 100%;
-        margin-bottom: 15px;
-    }
-
-    #entity-counts, #event-menu {
-        width: calc(50% - 10px);
-        margin-bottom: 15px;
-    }
-
-    #play-area {
-        height: calc(100vh - 250px);
-    }
-}
