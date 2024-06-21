@@ -56,13 +56,13 @@ export class EntityManager {
         }
     }
 
-    updateEntities(deltaTime) {
-        Object.values(this.entities).forEach(entityGroup => {
-            entityGroup.forEach(entity => entity.update(deltaTime));
-        });
+updateEntities(deltaTime) {
+    Object.values(this.entities).forEach(entityGroup => {
+        entityGroup.forEach(entity => entity.update(deltaTime, this));
+    });
 
-        this.handleInteractions();
-    }
+    this.handleInteractions();
+}
 
     handleInteractions() {
         this.handleButterflyPollination();
