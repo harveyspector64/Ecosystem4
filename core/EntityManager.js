@@ -20,6 +20,10 @@ export class EntityManager {
         };
     }
 
+    initialize() {
+        // Any initialization logic for EntityManager
+    }
+
     addBush(x, y) {
         const bush = new Bush(x, y);
         this.entities.bushes.push(bush);
@@ -46,7 +50,9 @@ export class EntityManager {
     }
 
     spawnButterfliesForBush(bush) {
-        const numButterflies = Math.floor(Math.random() * 2) + 1; // 1-2 butterflies
+        const numButterflies = GameConfig.INITIAL_BUTTERFLIES_PER_BUSH + 
+            (Math.random() < GameConfig.CHANCE_FOR_EXTRA_BUTTERFLY ? 1 : 0);
+        
         for (let i = 0; i < numButterflies; i++) {
             const butterflyX = bush.x + (Math.random() - 0.5) * 100;
             const butterflyY = bush.y + (Math.random() - 0.5) * 100;
@@ -56,13 +62,13 @@ export class EntityManager {
         }
     }
 
-updateEntities(deltaTime) {
-    Object.values(this.entities).forEach(entityGroup => {
-        entityGroup.forEach(entity => entity.update(deltaTime, this));
-    });
+    updateEntities(deltaTime) {
+        Object.values(this.entities).forEach(entityGroup => {
+            entityGroup.forEach(entity => entity.update(deltaTime, this));
+        });
 
-    this.handleInteractions();
-}
+        this.handleInteractions();
+    }
 
     handleInteractions() {
         this.handleButterflyPollination();
@@ -81,7 +87,7 @@ updateEntities(deltaTime) {
     handleBirdHunting() {
         this.entities.birds.forEach(bird => {
             if (bird.isHunting()) {
-                const nearbyWorm = this.findNearestEntity(bird, this.entities.worms, GameConfig.BIRD_HUNTING_RANGE);
+                const nearbyWorm = this.findNearestEntity(bird, this.entities.worms, GameConfig.BIRD_WORM_DETECTION_RANGE);
                 if (nearbyWorm) {
                     bird.hunt(nearbyWorm);
                     this.removeEntity(nearbyWorm);
@@ -115,5 +121,27 @@ updateEntities(deltaTime) {
         return Object.values(this.entities).flat().filter(entity => 
             MathUtils.getDistance(position, entity) <= radius
         );
+    }
+
+    hideAllButterflies() {
+        this.entities.butterflies.forEach(butterfly => {
+            butterfly.element.style.display = 'none';
+        });
+    }
+
+    showAllButterflies() {
+        this.entities.butterflies.forEach(butterfly => {
+            butterfly.element.style.display = '';
+        });
+    }
+
+    getWormCount() {
+        return this.entities.worms.length;
+    }
+
+    renderEntities(renderer) {
+        Object.values(this.entities).flat().forEach(entity => {
+            entity.render(renderer);
+        });
     }
 }
