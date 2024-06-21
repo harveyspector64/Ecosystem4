@@ -3,31 +3,28 @@
 import { GameConfig } from '../config/GameConfig.js';
 import { DragDropHandler } from './DragDropHandler.js';
 import { TouchHandler } from './TouchHandler.js';
-import { EventLogger } from './EventLogger.js';
 
 export class UIManager {
     constructor(game) {
         this.game = game;
         this.emojiPanel = null;
-        this.eventMenu = null;
+        this.eventLog = null;
         this.playArea = null;
         this.dragDropHandler = new DragDropHandler(this);
         this.touchHandler = new TouchHandler(this);
-        this.eventLogger = null;
     }
 
     initialize() {
         this.emojiPanel = document.getElementById('emoji-panel');
-        this.eventMenu = document.getElementById('event-menu');
+        this.eventLog = document.getElementById('event-messages');
         this.playArea = document.getElementById('play-area');
-
-        this.eventLogger = new EventLogger(this.eventMenu, GameConfig.MAX_EVENT_MESSAGES);
 
         this.initializeEmojiPanel();
         this.setupEventListeners();
 
         // Subscribe to relevant events
         this.game.eventSystem.subscribe('logEvent', this.addEventLogMessage.bind(this));
+        this.game.eventSystem.subscribe('dayNightChange', this.updateDayNightCycle.bind(this));
     }
 
     initializeEmojiPanel() {
@@ -53,15 +50,25 @@ export class UIManager {
 
     addEventLogMessage(data) {
         const { message } = data;
-        this.eventLogger.addMessage(message);
+        const messageElement = document.createElement('div');
+        messageElement.textContent = message;
+        this.eventLog.appendChild(messageElement);
+        
+        // Keep only the last 5 messages
+        while (this.eventLog.children.length > 5) {
+            this.eventLog.removeChild(this.eventLog.firstChild);
+        }
+
+        // Scroll to the bottom of the event log
+        this.eventLog.scrollTop = this.eventLog.scrollHeight;
     }
 
     updateDayNightCycle(cycle) {
         if (cycle === 'night') {
-            document.body.classList.add('night-mode');
+            this.playArea.classList.add('night-mode');
             this.addEventLogMessage({ message: "Night has fallen." });
         } else {
-            document.body.classList.remove('night-mode');
+            this.playArea.classList.remove('night-mode');
             this.addEventLogMessage({ message: "A new day has dawned." });
         }
     }
@@ -94,8 +101,7 @@ export class UIManager {
     }
 
     updateEntityCounts(counts) {
-        // Implement this method to update displayed entity counts
-        // This could be called periodically from the Game class
+        // This method is not used in the current UI, but kept for potential future use
         console.log('Entity counts:', counts);
     }
 }
