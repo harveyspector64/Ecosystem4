@@ -28,7 +28,6 @@ export class UIManager {
 
         // Subscribe to relevant events
         this.game.eventSystem.subscribe('logEvent', this.addEventLogMessage.bind(this));
-        this.game.eventSystem.subscribe('dayNightChange', this.updateDayNightCycle.bind(this));
     }
 
     initializeEmojiPanel() {
@@ -60,8 +59,10 @@ export class UIManager {
     updateDayNightCycle(cycle) {
         if (cycle === 'night') {
             document.body.classList.add('night-mode');
+            this.addEventLogMessage({ message: "Night has fallen." });
         } else {
             document.body.classList.remove('night-mode');
+            this.addEventLogMessage({ message: "A new day has dawned." });
         }
     }
 
@@ -69,10 +70,12 @@ export class UIManager {
         const treeElement = document.getElementById('tree');
         treeElement.classList.remove('disabled');
         treeElement.setAttribute('draggable', 'true');
+        this.addEventLogMessage({ message: "You can now plant trees!" });
     }
 
     addWormToPanel() {
         this.addEmojiToPanel(GameConfig.EMOJIS.WORM, 'worm');
+        this.addEventLogMessage({ message: "Worms have appeared! You can now place them." });
     }
 
     addEmojiToPanel(emoji, id) {
@@ -88,5 +91,11 @@ export class UIManager {
 
     handleEmojiDrop(emoji, x, y) {
         this.game.eventSystem.publish('emojiAdded', { emoji, x, y });
+    }
+
+    updateEntityCounts(counts) {
+        // Implement this method to update displayed entity counts
+        // This could be called periodically from the Game class
+        console.log('Entity counts:', counts);
     }
 }
