@@ -94,7 +94,7 @@ export class EntityManager {
         });
     }
 
-handleBirdHunting() {
+    handleBirdHunting() {
         this.entities.birds.forEach(bird => {
             if (bird.isHunting) {
                 const nearbyWorm = this.findNearbyWorm(bird);
