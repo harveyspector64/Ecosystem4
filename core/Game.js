@@ -18,6 +18,8 @@ export class Game {
         this.performanceMonitor = new PerformanceMonitor();
 
         this.isRunning = false;
+        this.lastUpdateTime = 0;
+        this.lastCycle = 'day';
     }
 
     initialize() {
@@ -32,6 +34,7 @@ export class Game {
         this.eventSystem.subscribe('butterflyPollinated', this.handleButterflyPollinated.bind(this));
         
         this.isRunning = true;
+        this.lastUpdateTime = performance.now();
         this.gameLoop();
     }
 
@@ -39,15 +42,23 @@ export class Game {
         const { emoji, x, y } = data;
         switch(emoji) {
             case GameConfig.EMOJIS.BUSH:
-                this.entityManager.addBush(x, y);
-                this.uiManager.unlockTree();
+                if (this.stateManager.canPlantBush()) {
+                    this.entityManager.addBush(x, y);
+                    this.stateManager.incrementBushCount();
+                    this.uiManager.unlockTree();
+                }
                 break;
             case GameConfig.EMOJIS.TREE:
-                this.entityManager.addTree(x, y);
-                this.entityManager.addBird(x, y);
+                if (this.stateManager.canPlantTree()) {
+                    this.entityManager.addTree(x, y);
+                    this.stateManager.incrementTreeCount();
+                    this.entityManager.addBird(x, y);
+                    this.stateManager.incrementBirdCount();
+                }
                 break;
             case GameConfig.EMOJIS.WORM:
                 this.entityManager.addWorm(x, y);
+                this.stateManager.incrementWormCount();
                 break;
         }
         this.eventSystem.gameEvent('logEvent', `A ${this.getEmojiName(emoji)} has been added to the ecosystem!`);
@@ -56,8 +67,8 @@ export class Game {
     handleBirdLanded(data) {
         const { birdId } = data;
         this.eventSystem.gameEvent('logEvent', `Bird ${birdId} has landed!`);
-        if (!this.stateManager.firstBirdLanded) {
-            this.stateManager.firstBirdLanded = true;
+        if (!this.stateManager.getState().firstBirdLanded) {
+            this.stateManager.setFirstBirdLanded();
             this.uiManager.addWormToPanel();
         }
     }
@@ -90,8 +101,18 @@ export class Game {
     }
 
     update(currentTime) {
-        this.entityManager.updateEntities(currentTime);
-        this.stateManager.update(currentTime);
+        const deltaTime = currentTime - this.lastUpdateTime;
+        this.lastUpdateTime = currentTime;
+
+        this.stateManager.update(deltaTime);
+        this.entityManager.updateEntities(deltaTime);
+        
+        // Check day/night cycle and update accordingly
+        const currentCycle = this.stateManager.getState().dayNightCycle;
+        if (currentCycle !== this.lastCycle) {
+            this.lastCycle = currentCycle;
+            this.eventSystem.gameEvent('dayNightChange', currentCycle);
+        }
     }
 
     render() {
