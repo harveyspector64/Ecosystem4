@@ -26,14 +26,17 @@ export class Game {
         this.entityManager.initialize();
         this.renderer.initialize(document.getElementById('play-area'));
 
+        // Set up event listeners
         this.eventSystem.subscribe('emojiAdded', this.handleEmojiAdded.bind(this));
+        this.eventSystem.subscribe('birdLanded', this.handleBirdLanded.bind(this));
+        this.eventSystem.subscribe('butterflyPollinated', this.handleButterflyPollinated.bind(this));
         
         this.isRunning = true;
         this.gameLoop();
     }
 
-    handleEmojiAdded(emoji, x, y) {
-        // Logic for adding different types of emojis
+    handleEmojiAdded(data) {
+        const { emoji, x, y } = data;
         switch(emoji) {
             case GameConfig.EMOJIS.BUSH:
                 this.entityManager.addBush(x, y);
@@ -47,11 +50,32 @@ export class Game {
                 this.entityManager.addWorm(x, y);
                 break;
         }
-        this.uiManager.addEventLogMessage(`A ${this.getEmojiName(emoji)} has been added to the ecosystem!`);
+        this.eventSystem.gameEvent('logEvent', `A ${this.getEmojiName(emoji)} has been added to the ecosystem!`);
+    }
+
+    handleBirdLanded(data) {
+        const { birdId } = data;
+        this.eventSystem.gameEvent('logEvent', `Bird ${birdId} has landed!`);
+        if (!this.stateManager.firstBirdLanded) {
+            this.stateManager.firstBirdLanded = true;
+            this.uiManager.addWormToPanel();
+        }
+    }
+
+    handleButterflyPollinated(data) {
+        const { bushId } = data;
+        this.eventSystem.gameEvent('logEvent', `A butterfly has pollinated bush ${bushId}!`);
     }
 
     getEmojiName(emoji) {
-        // ... (same as in original script)
+        switch(emoji) {
+            case GameConfig.EMOJIS.BUSH: return 'bush';
+            case GameConfig.EMOJIS.TREE: return 'tree';
+            case GameConfig.EMOJIS.BUTTERFLY: return 'butterfly';
+            case GameConfig.EMOJIS.BIRD: return 'bird';
+            case GameConfig.EMOJIS.WORM: return 'worm';
+            default: return 'creature';
+        }
     }
 
     gameLoop(currentTime) {
