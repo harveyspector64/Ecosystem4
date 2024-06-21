@@ -36,17 +36,20 @@ body {
     cursor: not-allowed;
 }
 
-#event-log {
+#breaking-news {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#breaking-news h3 {
+    margin: 0 0 10px 0;
+}
+
+#news-ticker {
     flex-grow: 1;
     overflow-y: auto;
-}
-
-#event-log h3 {
-    margin-top: 0;
-    margin-bottom: 10px;
-}
-
-#event-messages {
     font-size: 14px;
 }
 
@@ -59,12 +62,5 @@ body {
 
 .entity {
     position: absolute;
-    font-size: 30px;
+    transition: all 0.3s ease;
 }
-
-/* Specific entity sizes */
-.bush { font-size: 40px; }
-.tree { font-size: 50px; }
-.butterfly { font-size: 20px; }
-.bird { font-size: 30px; }
-.worm { font-size: 20px; }
