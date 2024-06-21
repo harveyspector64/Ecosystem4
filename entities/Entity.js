@@ -44,11 +44,23 @@ export class Entity {
         return this.hunger < 60;
     }
 
-    update(deltaTime) {
+    update(deltaTime, entityManager) {
         // To be implemented by subclasses
     }
 
     render(renderer) {
         renderer.renderEntity(this);
+    }
+
+    shake(renderer, intensity = 5, duration = 500) {
+        renderer.shake(this.element, intensity, duration);
+    }
+
+    fadeIn(renderer, duration = 1000) {
+        renderer.fadeIn(this.element, duration);
+    }
+
+    fadeOut(renderer, duration = 1000) {
+        renderer.fadeOut(this.element, duration);
     }
 }
