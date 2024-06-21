@@ -3,6 +3,7 @@
 import { GameConfig } from '../config/GameConfig.js';
 import { DragDropHandler } from './DragDropHandler.js';
 import { TouchHandler } from './TouchHandler.js';
+import { EventLogger } from './EventLogger.js';
 
 export class UIManager {
     constructor(game) {
@@ -12,12 +13,15 @@ export class UIManager {
         this.playArea = null;
         this.dragDropHandler = new DragDropHandler(this);
         this.touchHandler = new TouchHandler(this);
+        this.eventLogger = null;
     }
 
     initialize() {
         this.emojiPanel = document.getElementById('emoji-panel');
         this.eventMenu = document.getElementById('event-menu');
         this.playArea = document.getElementById('play-area');
+
+        this.eventLogger = new EventLogger(this.eventMenu, GameConfig.MAX_EVENT_MESSAGES);
 
         this.initializeEmojiPanel();
         this.setupEventListeners();
@@ -50,18 +54,7 @@ export class UIManager {
 
     addEventLogMessage(data) {
         const { message } = data;
-        const eventMessageElement = document.createElement('div');
-        eventMessageElement.className = 'event-message';
-        eventMessageElement.textContent = message;
-        
-        this.eventMenu.appendChild(eventMessageElement);
-        
-        // Keep only the last 5 messages
-        while (this.eventMenu.children.length > 6) { // +1 for the header
-            this.eventMenu.removeChild(this.eventMenu.children[1]); // Remove the oldest message, not the header
-        }
-        
-        console.log(`BREAKING NEWS: ${message}`);
+        this.eventLogger.addMessage(message);
     }
 
     updateDayNightCycle(cycle) {
